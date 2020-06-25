@@ -1,0 +1,1 @@
+# Spatial benchmarks for skyportal 
