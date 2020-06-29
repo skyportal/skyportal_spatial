@@ -8,7 +8,7 @@ from sqlalchemy.dialects import postgresql as psql
 DEGREES_PER_ARCSEC = 0.0002777777
 
 
-class SpatiallyIndexed(object):
+class Spatial(object):
     """A mixin indicating to the database that an object has sky coordinates.
     Classes that mix this class get a q3c spatial index on ra and dec.
     Columns:
@@ -42,7 +42,7 @@ class SpatiallyIndexed(object):
         Parameters
         ----------
 
-        other: subclass of SpatiallyIndexed or instance of SpatiallyIndexed
+        other: subclass of Spatial or instance of Spatial
            The class or object to query against. If a class, will generate
            a clause element that can be used to join two tables, otherwise
            will generate a clause element that can be used to filter a
@@ -54,14 +54,14 @@ class SpatiallyIndexed(object):
            distance of one another.
         """
 
-        if isinstance(other, SpatiallyIndexed):
+        if isinstance(other, Spatial):
             func = sa.func.q3c_radial_query
-        elif issubclass(other, SpatiallyIndexed):
+        elif issubclass(other, Spatial):
             func = sa.func.q3c_join
         else:
             raise ValueError('Input to `raidally_within` must be an instance '
-                             'of SpatiallyIndexed or a subclass of '
-                             'SpatiallyIndexed.')
+                             'of Spatial or a subclass of '
+                             'Spatial.')
 
         return func(
             other.ra, other.dec, self.ra, self.dec,
