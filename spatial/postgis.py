@@ -79,7 +79,7 @@ class Spatial(object):
 
         # spatial information from this class
         mypoint = sa.func.ST_Point(self.ra - 180., self.dec)
-        mysetpoint = sa.func.SetSRID(mypoint, self.SRID)
+        mysetpoint = sa.func.ST_SetSRID(mypoint, self.SRID)
 
         # this is the filter / join clause
         return sa.func.ST_DWithin(mysetpoint, osetpoint, eqdist, False)

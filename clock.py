@@ -13,7 +13,8 @@ SEED = 8675309
 np.random.seed(SEED)
 
 basedir = os.path.dirname(__file__)
-conf = yaml.load(f'{basedir}/config.yaml', Loader=yaml.FullLoader)
+confpath = os.path.join(basedir, 'config.yaml')
+conf = yaml.load(open(confpath, 'r'), Loader=yaml.FullLoader)
 itype = conf['index_type'].lower()
 
 # Get the requested backend
@@ -33,7 +34,7 @@ def init_db(user, database, password=None, host=None, port=None):
     url = 'postgresql://{}:{}@{}:{}/{}'
     url = url.format(user, password or '', host or '', port or '', database)
 
-    conn = sa.create_engine(url, client_encoding='utf8', echo=True)
+    conn = sa.create_engine(url, client_encoding='utf8')
 
     DBSession.configure(bind=conn)
     Base.metadata.bind = conn
@@ -42,14 +43,18 @@ def init_db(user, database, password=None, host=None, port=None):
 
 
 class Object(Spatial, Base):
+    __tablename__ = 'objects'
     id = sa.Column(sa.Integer, primary_key=True)
 
 
 init_db(**conf['database'])
 radius = 3600.  # arcsec
 
+
 for nr in [10, 100, 1000, 10000, 100000, 1000000]:
-    DBSession().create_all()
+
+    Base.metadata.create_all()
+
     ra = np.random.uniform(low=0, high=360, size=nr)
     dec = np.random.uniform(low=-90, high=90, size=nr)
 
@@ -75,4 +80,6 @@ for nr in [10, 100, 1000, 10000, 100000, 1000000]:
 
     print('query successful')
 
-    DBSession().drop_all()
+    DBSession().execute('TRUNCATE TABLE objects')
+    DBSession().execute('DROP TABLE objects')
+    DBSession().commit()
