@@ -58,4 +58,4 @@ class Spatial(object):
         sa2 = sa.func.sin((90 - other.dec) * DEG_TO_RAD)
         cf = sa.func.cos((self.ra - other.ra) * DEG_TO_RAD)
 
-        return sa.func.acos(ca1 * ca2 + sa1 * sa2 * cf) < sep_rad
+        return sa.func.acos(ca1 * ca2 + sa1 * sa2 * cf) <= sep_rad
