@@ -57,5 +57,7 @@ class Spatial(object):
         sa1 = sa.func.sin((90 - self.dec) * DEG_TO_RAD)
         sa2 = sa.func.sin((90 - other.dec) * DEG_TO_RAD)
         cf = sa.func.cos((self.ra - other.ra) * DEG_TO_RAD)
+        roundoff_safe = sa.func.greatest(ca1 * ca2 + sa1 * sa2 * cf, -1)
+        roundoff_safe = sa.func.least(roundoff_safe, 1)
 
-        return sa.func.acos(ca1 * ca2 + sa1 * sa2 * cf) <= sep_rad
+        return sa.func.acos(roundoff_safe) <= sep_rad
