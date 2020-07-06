@@ -37,7 +37,7 @@ jobs:
         git checkout v1.8.2
         make
         make install
-        cd ../zuds-pipeline
+        cd ../skyportal_spatial
     - name: Install postgis (mac)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
