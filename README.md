@@ -1,1 +1,1 @@
-# PostGISSpatialBackend benchmarks for skyportal 
+# Spatial Backend Benchmarks for Skyportal 
