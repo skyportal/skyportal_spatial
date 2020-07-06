@@ -7,6 +7,7 @@ setup(
                       'numpy>=1.12.0',
                       'astropy>=4.0.0',
                       'pyyaml>=5.0.0',
-                      'psycopg2>=2.5.3'],
+                      'psycopg2>=2.5.3',
+                      'scipy>=1.0.0'],
     packages=['skyportal_spatial']
 )
