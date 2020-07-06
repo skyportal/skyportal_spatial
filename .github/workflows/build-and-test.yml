@@ -22,12 +22,16 @@ jobs:
         sudo apt-get update
         sudo apt-get install postgresql-q3c postgis
         sudo systemctl start postgresql.service
-    - name: Set up homebrew and install postgres (mac)
+    - name: Set up homebrew and install postgres, postgis (mac)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-        brew install cfitsio postgresql
+        brew install postgresql postgis
         brew services start postgresql
+    - name: Set up test database
+      run: |
+        createuser --superuser skyportal
+        createdb -U skyportal skyportal_test
     - name: Checkout, compile, and install q3c (mac)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
@@ -38,10 +42,6 @@ jobs:
         make
         make install
         cd ../skyportal_spatial
-    - name: Install postgis (mac)
-      if: ${{ matrix.os == 'macos-latest' }}
-      run: |
-        brew install postgis
     - name: Setup Anaconda
       uses: s-weigand/setup-conda@v1.0.3
       with:

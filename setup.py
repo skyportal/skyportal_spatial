@@ -5,6 +5,7 @@ setup(
     install_requires=['sqlalchemy>=1.2.8',
                       'pytest>=3.3.0',
                       'numpy>=1.12.0',
-                      'astropy>=4.0.0'],
+                      'astropy>=4.0.0',
+                      'pyyaml>=5.0.0'],
     packages=['skyportal_spatial']
 )
