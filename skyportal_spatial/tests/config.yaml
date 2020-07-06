@@ -4,4 +4,4 @@ database:
     host: localhost
     port: 5432
     username: skyportal
-    password:
+    password: test
