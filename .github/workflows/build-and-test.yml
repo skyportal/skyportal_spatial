@@ -1,0 +1,63 @@
+name: build-and-test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Postgres & q3c & postgis (ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install postgresql-q3c postgis
+        sudo systemctl start postgresql.service
+    - name: Set up homebrew and install postgres (mac)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        brew install cfitsio postgresql
+        brew services start postgresql
+    - name: Checkout, compile, and install q3c (mac)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        cd ..
+        git clone https://github.com/segasai/q3c.git
+        cd q3c
+        git checkout v1.8.2
+        make
+        make install
+        cd ../zuds-pipeline
+    - name: Install postgis (mac)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        brew install postgis
+    - name: Setup Anaconda
+      uses: s-weigand/setup-conda@v1.0.3
+      with:
+        activate-conda: true
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest wheel
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        pytest
