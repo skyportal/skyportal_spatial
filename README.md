@@ -1,1 +1,1 @@
-# Spatial Backend Benchmarks for Skyportal 
+# Spatial Backend for Skyportal 
