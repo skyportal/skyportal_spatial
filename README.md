@@ -1,1 +1,1 @@
-# PostGISSpatialBackend benchmarks for skyportal 
+# SQLAlchemy Spatial Backend for Astronomical psql DBs
