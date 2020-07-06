@@ -139,6 +139,12 @@ class Geography(UserDefinedType):
 class PostGISSpatialBackend(object):
     """A mixin indicating to the database that an object has sky coordinates.
     Classes that mix this class get a PostGIS spatial index on ra and dec.
+
+    NOTE: Due to the way PostGIS stores spatial data (one column for both RA
+    and DEC), if the value of either of these columns is null then the value
+    of the nonnull column will not be persisted to the DB. Both RA and Dec must
+    be specified for the coordinate to be saved to postgres.
+
     Columns:
         ra: the icrs right ascension of the object in degrees
         dec: the icrs declination of the object in degrees
@@ -153,14 +159,13 @@ class PostGISSpatialBackend(object):
     DEFAULT = 'POINT(NULL NULL)'
 
     # how RA/DEC is stored
-    geometry = sa.Column(Geography(2))
+    radec = sa.Column(Geography(2))
 
     def _splstr(self):
-        return str(self.geometry)[6:-1].split()
-
+        return str(self.radec)[6:-1].split()
 
     def _complete(self):
-        if self.geometry is None:
+        if self.radec is None:
             return False
         else:
             for key in self._splstr():
@@ -184,23 +189,23 @@ class PostGISSpatialBackend(object):
 
     @ra.expression
     def ra(self):
-        return func.ST_X(self.geometry) + 180.
+        return func.ST_X(self.radec) + 180.
 
     @dec.expression
     def dec(self):
-        return func.ST_Y(self.geometry)
+        return func.ST_Y(self.radec)
 
     @ra.setter
     def ra(self, value):
-        if self.geometry is None:
-            self.geometry = self.DEFAULT
-        self.geometry = f'POINT({value - 180} {self.dec})'
+        if self.radec is None:
+            self.radec = self.DEFAULT
+        self.radec = f'POINT({value - 180} {self.dec})'
 
     @dec.setter
     def dec(self, value):
-        if self.geometry is None:
-            self.geometry = self.DEFAULT
-        self.geometry = f'POINT({self.ra} {value})'
+        if self.radec is None:
+            self.radec = self.DEFAULT
+        self.radec = f'POINT({self.ra} {value})'
 
     @property
     def skycoord(self):
@@ -214,8 +219,26 @@ class PostGISSpatialBackend(object):
         # subtract off 180 from RA to keep things within the
         # geo bounds (GIS convention: longitude goes from -180 to 180)
 
-        return sa.Index(f'{tn}_postgis_radec_index', cls.geometry,
+        return sa.Index(f'{tn}_postgis_radec_index', cls.radec,
                         postgresql_using='spgist'),
+
+    @hybrid_method
+    def distance(self, other):
+        """Return an SQLalchemy clause element that can be used to calculate
+        the angular separation between `self` and `other` in arcsec.
+
+        Parameters
+        ----------
+
+        other: subclass of PostGISSpatialBackend or instance of PostGISSpatialBackend
+           The class or object to query against. If a class, will generate
+           a clause element that can be used to join two tables, otherwise
+           will generate a clause element that can be used to filter a
+           single table.
+        """
+
+        dist_m = sa.func.ST_Distance(self.radec, other.radec, False)
+        return dist_m / self.RADIUS / RADIANS_PER_ARCSEC
 
     @hybrid_method
     def radially_within(self, other, angular_sep_arcsec):
@@ -243,4 +266,4 @@ class PostGISSpatialBackend(object):
 
         # spatial information from this class
         # this is the filter / join clause
-        return sa.func.ST_DWithin(self.geometry, other.geometry, eqdist, False)
+        return sa.func.ST_DWithin(self.radec, other.radec, eqdist, False)

@@ -61,7 +61,7 @@ def check_differences(res, jm1, jm2):
     return {'resmjm': resmjm, 'jmmres': jmmres}
 
 
-for nr in [10, 100, 1000, 10000]:
+for nr in [10, 100, 1000, 10000, 100000, 1000000]:
 
     Base.metadata.create_all()
 
@@ -90,20 +90,22 @@ for nr in [10, 100, 1000, 10000]:
     print(f'{nr} rows: {stop - start:.2e} sec to do rad query ({itype} index)')
     assert len(res) == len(matches)
 
-    # do a self join
-    o1 = sa.orm.aliased(Object)
-    o2 = sa.orm.aliased(Object)
-    start = time.time()
-    q = DBSession().query(o1, o2).join(o2, o1.radially_within(o2, radius))
-    print(q.statement.compile(compile_kwargs={'literal_binds':True}))
-    res = q.all()
-    stop = time.time()
-    print(f'{nr} rows: {stop - start:.2e} sec to do rad join ({itype} index)')
-    assert len(res) == len(jm)
+    if nr < 1e5:
 
-    diffs = check_differences(res, jm, jm2)
-    for k in diffs:
-        assert len(diffs[k]) == 0
+        # do a self join
+        o1 = sa.orm.aliased(Object)
+        o2 = sa.orm.aliased(Object)
+        start = time.time()
+        q = DBSession().query(o1, o2).join(o2, o1.radially_within(o2, radius))
+        print(q.statement.compile(compile_kwargs={'literal_binds':True}))
+        res = q.all()
+        stop = time.time()
+        print(f'{nr} rows: {stop - start:.2e} sec to do rad join ({itype} index)')
+        assert len(res) == len(jm)
+
+        diffs = check_differences(res, jm, jm2)
+        for k in diffs:
+            assert len(diffs[k]) == 0
 
     DBSession().execute('TRUNCATE TABLE objects')
     DBSession().execute('DROP TABLE objects')

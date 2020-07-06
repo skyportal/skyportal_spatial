@@ -5,7 +5,7 @@ from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy.dialects import postgresql as psql
 
 
-DEGREES_PER_ARCSEC = 0.0002777777
+DEGREES_PER_ARCSEC = 1 / 3600.
 
 
 class Q3CSpatialBackend(object):
@@ -35,6 +35,23 @@ class Q3CSpatialBackend(object):
             cls.ra, cls.dec)),
 
     @hybrid_method
+    def distance(self, other):
+        """Return an SQLalchemy clause element that can be used to calculate
+        the angular separation between `self` and `other` in arcsec.
+
+        Parameters
+        ----------
+
+        other: subclass of Q3CSpatialBackend or instance of Q3CSpatialBackend
+           The class or object to query against. If a class, will generate
+           a clause element that can be used to join two tables, otherwise
+           will generate a clause element that can be used to filter a
+           single table.
+        """
+
+        return sa.func.q3c_dist(self.ra, self.dec, other.ra, other.dec) * 3600.
+
+    @hybrid_method
     def radially_within(self, other, angular_sep_arcsec):
         """Return an SQLalchemy clause element that can be used as a join or
         filter condition for a radial query.
@@ -42,7 +59,7 @@ class Q3CSpatialBackend(object):
         Parameters
         ----------
 
-        other: subclass of PostGISSpatialBackend or instance of PostGISSpatialBackend
+        other: subclass of Q3CSpatialBackend or instance of Q3CSpatialBackend
            The class or object to query against. If a class, will generate
            a clause element that can be used to join two tables, otherwise
            will generate a clause element that can be used to filter a

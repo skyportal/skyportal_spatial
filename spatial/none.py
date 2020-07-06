@@ -6,8 +6,8 @@ from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy.dialects import postgresql as psql
 
 
-RADIANS_PER_ARCSEC = 4.84814e-6
 DEG_TO_RAD = np.pi / 180.
+RADIANS_PER_ARCSEC = DEG_TO_RAD * 3600.
 
 
 class UnindexedSpatialBackend(object):
@@ -32,6 +32,29 @@ class UnindexedSpatialBackend(object):
         return SkyCoord(self.ra, self.dec, unit='deg')
 
     @hybrid_method
+    def distance(self, other):
+        """Return an SQLalchemy clause element that can be used to calculate
+        the angular separation between `self` and `other` in arcsec.
+
+        Parameters
+        ----------
+
+        other: subclass of Q3CSpatialBackend or instance of Q3CSpatialBackend
+           The class or object to query against. If a class, will generate
+           a clause element that can be used to join two tables, otherwise
+           will generate a clause element that can be used to filter a
+           single table.
+        """
+        ca1 = sa.func.cos((90 - self.dec) * DEG_TO_RAD)
+        ca2 = sa.func.cos((90 - other.dec) * DEG_TO_RAD)
+        sa1 = sa.func.sin((90 - self.dec) * DEG_TO_RAD)
+        sa2 = sa.func.sin((90 - other.dec) * DEG_TO_RAD)
+        cf = sa.func.cos((self.ra - other.ra) * DEG_TO_RAD)
+        roundoff_safe = sa.func.greatest(ca1 * ca2 + sa1 * sa2 * cf, -1)
+        roundoff_safe = sa.func.least(roundoff_safe, 1)
+        return sa.func.acos(roundoff_safe) / RADIANS_PER_ARCSEC
+
+    @hybrid_method
     def radially_within(self, other, angular_sep_arcsec):
         """Return an SQLalchemy clause element that can be used as a join or
         filter condition for a radial query.
@@ -39,7 +62,7 @@ class UnindexedSpatialBackend(object):
         Parameters
         ----------
 
-        other: subclass of PostGISSpatialBackend or instance of PostGISSpatialBackend
+        other: subclass of UnindexedSpatialBackend or instance of UnindexedSpatialBackend
            The class or object to query against. If a class, will generate
            a clause element that can be used to join two tables, otherwise
            will generate a clause element that can be used to filter a
@@ -51,13 +74,4 @@ class UnindexedSpatialBackend(object):
            distance of one another.
         """
 
-        sep_rad = RADIANS_PER_ARCSEC * angular_sep_arcsec
-        ca1 = sa.func.cos((90 - self.dec) * DEG_TO_RAD)
-        ca2 = sa.func.cos((90 - other.dec) * DEG_TO_RAD)
-        sa1 = sa.func.sin((90 - self.dec) * DEG_TO_RAD)
-        sa2 = sa.func.sin((90 - other.dec) * DEG_TO_RAD)
-        cf = sa.func.cos((self.ra - other.ra) * DEG_TO_RAD)
-        roundoff_safe = sa.func.greatest(ca1 * ca2 + sa1 * sa2 * cf, -1)
-        roundoff_safe = sa.func.least(roundoff_safe, 1)
-
-        return sa.func.acos(roundoff_safe) <= sep_rad
+        return self.distance(other) <= angular_sep_arcsec
