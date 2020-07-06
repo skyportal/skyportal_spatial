@@ -151,6 +151,6 @@ class TestNone(_TestBase):
 
     Base = declarative_base()
 
-    class Object(Q3CSpatialBackend, Base):
+    class Object(UnindexedSpatialBackend, Base):
         __tablename__ = 'none_objects'
         id = sa.Column(sa.Integer, primary_key=True)
