@@ -1,6 +1,4 @@
 
-index_type: postgis
-
 database:
     database: skyportal_test
     host: localhost
