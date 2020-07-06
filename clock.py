@@ -15,7 +15,9 @@ np.random.seed(SEED)
 basedir = os.path.dirname(__file__)
 confpath = os.path.join(basedir, 'config.yaml')
 conf = yaml.load(open(confpath, 'r'), Loader=yaml.FullLoader)
-itype = conf['index_type'].lower()
+itype = conf['index_type']
+if itype is not None:
+    itype = itype.lower()
 
 # Get the requested backend
 if itype == 'postgis':
@@ -51,7 +53,15 @@ init_db(**conf['database'])
 radius = 3600.  # arcsec
 
 
-for nr in [10, 100, 1000, 10000, 100000, 1000000]:
+def check_differences(res, jm1, jm2):
+    resids = set((r[0].id - 1, r[1].id - 1) for r in res)
+    jmids = set(zip(jm1, jm2))
+    resmjm = resids - jmids
+    jmmres = jmids - resids
+    return {'resmjm': resmjm, 'jmmres': jmmres}
+
+
+for nr in [10, 100, 1000, 10000]:
 
     Base.metadata.create_all()
 
@@ -60,9 +70,10 @@ for nr in [10, 100, 1000, 10000, 100000, 1000000]:
 
     truth = SkyCoord(ra, dec, unit='deg')
     coord = truth[0]
-    matches = truth[truth.separation(coord) < radius * u.arcsec]
-
+    matches = truth[truth.separation(coord) <= radius * u.arcsec]
+    jm, jm2, _, _ = truth.search_around_sky(truth, seplimit=radius * u.arcsec)
     objs = [Object(ra=r, dec=d) for r, d in zip(ra, dec)]
+
     DBSession().add_all(objs)
 
     start = time.time()
@@ -73,12 +84,26 @@ for nr in [10, 100, 1000, 10000, 100000, 1000000]:
 
     start = time.time()
     q = DBSession().query(Object).filter(Object.radially_within(objs[0], radius))
+    print(q.statement.compile(compile_kwargs={'literal_binds':True}))
     res = q.all()
     stop = time.time()
     print(f'{nr} rows: {stop - start:.2e} sec to do rad query ({itype} index)')
     assert len(res) == len(matches)
 
-    print('query successful')
+    # do a self join
+    o1 = sa.orm.aliased(Object)
+    o2 = sa.orm.aliased(Object)
+    start = time.time()
+    q = DBSession().query(o1, o2).join(o2, o1.radially_within(o2, radius))
+    print(q.statement.compile(compile_kwargs={'literal_binds':True}))
+    res = q.all()
+    stop = time.time()
+    print(f'{nr} rows: {stop - start:.2e} sec to do rad join ({itype} index)')
+    assert len(res) == len(jm)
+
+    diffs = check_differences(res, jm, jm2)
+    for k in diffs:
+        assert len(diffs[k]) == 0
 
     DBSession().execute('TRUNCATE TABLE objects')
     DBSession().execute('DROP TABLE objects')
