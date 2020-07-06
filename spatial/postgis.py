@@ -155,7 +155,7 @@ class PostGISSpatialBackend(object):
     """
 
     # standard spherical geometry WGS 84
-    RADIUS = 6370986.  # meters, for converting angles to distances
+    RADIUS = 6370986. * 1.00000357  # meters, for converting angles to distances
     DEFAULT = 'POINT(NULL NULL)'
 
     # how RA/DEC is stored

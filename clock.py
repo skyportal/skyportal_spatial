@@ -61,7 +61,7 @@ def check_differences(res, jm1, jm2):
     return {'resmjm': resmjm, 'jmmres': jmmres}
 
 
-for nr in [10, 100, 1000, 10000, 100000, 1000000]:
+for nr in [10, 100, 1000, 10000]:
 
     Base.metadata.create_all()
 
@@ -82,9 +82,19 @@ for nr in [10, 100, 1000, 10000, 100000, 1000000]:
     stop = time.time()
     print(f'{nr} rows: {stop - start:.2e} sec to load DB ({itype} index)')
 
+    # distance calculation
+    start = time.time()
+    q = DBSession().query(Object.distance(objs[0]))
+    print(q.statement.compile(compile_kwargs={'literal_binds': True}))
+    res = q.all()
+    distances_db = np.asarray([r[0] for r in res])
+    distances_true = truth.separation(coord).to('arcsec').value
+    np.testing.assert_allclose(distances_db, distances_true)
+    stop = time.time()
+
     start = time.time()
     q = DBSession().query(Object).filter(Object.radially_within(objs[0], radius))
-    print(q.statement.compile(compile_kwargs={'literal_binds':True}))
+    print(q.statement.compile(compile_kwargs={'literal_binds': True}))
     res = q.all()
     stop = time.time()
     print(f'{nr} rows: {stop - start:.2e} sec to do rad query ({itype} index)')

@@ -7,7 +7,7 @@ from sqlalchemy.dialects import postgresql as psql
 
 
 DEG_TO_RAD = np.pi / 180.
-RADIANS_PER_ARCSEC = DEG_TO_RAD * 3600.
+RADIANS_PER_ARCSEC = DEG_TO_RAD / 3600.
 
 
 class UnindexedSpatialBackend(object):
