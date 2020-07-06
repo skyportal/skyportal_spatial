@@ -10,7 +10,7 @@ RADIANS_PER_ARCSEC = 4.84814e-6
 DEG_TO_RAD = np.pi / 180.
 
 
-class Spatial(object):
+class UnindexedSpatialBackend(object):
     """A mixin indicating to the database that an object has sky coordinates.
     Classes that mix this class get no index on RA and DEC. Instead, a direct
     great circle distance formula is used in postgres for radial queries.
@@ -39,7 +39,7 @@ class Spatial(object):
         Parameters
         ----------
 
-        other: subclass of Spatial or instance of Spatial
+        other: subclass of PostGISSpatialBackend or instance of PostGISSpatialBackend
            The class or object to query against. If a class, will generate
            a clause element that can be used to join two tables, otherwise
            will generate a clause element that can be used to filter a

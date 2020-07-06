@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import yaml
-from spatial import q3c, none, postgis
+from spatial import PostGISSpatialBackend, Q3CSpatialBackend, UnindexedSpatialBackend
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,11 +21,11 @@ if itype is not None:
 
 # Get the requested backend
 if itype == 'postgis':
-    Spatial = postgis.Spatial
+    Spatial = PostGISSpatialBackend
 elif itype == 'q3c':
-    Spatial = q3c.Spatial
+    Spatial = Q3CSpatialBackend
 else:
-    Spatial = none.Spatial
+    Spatial = UnindexedSpatialBackend
 
 
 DBSession = scoped_session(sessionmaker())

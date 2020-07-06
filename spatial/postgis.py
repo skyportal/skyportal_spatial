@@ -136,7 +136,7 @@ class Geography(UserDefinedType):
         )
 
 
-class Spatial(object):
+class PostGISSpatialBackend(object):
     """A mixin indicating to the database that an object has sky coordinates.
     Classes that mix this class get a PostGIS spatial index on ra and dec.
     Columns:
@@ -225,7 +225,7 @@ class Spatial(object):
         Parameters
         ----------
 
-        other: subclass of Spatial or instance of Spatial
+        other: subclass of PostGISSpatialBackend or instance of PostGISSpatialBackend
            The class or object to query against. If a class, will generate
            a clause element that can be used to join two tables, otherwise
            will generate a clause element that can be used to filter a
