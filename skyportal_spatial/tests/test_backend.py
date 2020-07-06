@@ -17,13 +17,14 @@ basedir = os.path.dirname(__file__)
 confpath = os.path.join(basedir, 'config.yaml')
 conf = yaml.load(open(confpath, 'r'), Loader=yaml.FullLoader)
 
-
 def check_differences(res, jm1, jm2):
     resids = set((r[0].id - 1, r[1].id - 1) for r in res)
     jmids = set(zip(jm1, jm2))
     resmjm = resids - jmids
     jmmres = jmids - resids
     return {'resmjm': resmjm, 'jmmres': jmmres}
+
+
 
 
 class _TestBase(object):
@@ -38,7 +39,7 @@ class _TestBase(object):
     def DBSession(self):
 
         c = conf['database']
-        user = c.get('user')
+        user = c.get('username')
         password = c.get('password')
         host = c.get('host', None)
         port = c.get('port', None)
@@ -120,7 +121,6 @@ class _TestBase(object):
 
         DBSession().execute(f'DROP TABLE {self.Object.__tablename__}')
         DBSession().commit()
-
 
 
 class TestPostGIS(_TestBase):

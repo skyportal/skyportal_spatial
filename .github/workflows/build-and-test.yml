@@ -28,10 +28,6 @@ jobs:
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
         brew install postgresql postgis
         brew services start postgresql
-    - name: Set up test database
-      run: |
-        sudo createuser --superuser skyportal
-        sudo createdb -U skyportal skyportal_test
     - name: Checkout, compile, and install q3c (mac)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
