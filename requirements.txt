@@ -1,0 +1,4 @@
+sqlalchemy>=1.2.8
+pytest>=3.3.0
+numpy>=1.12.0
+astropy>=4.0.0
