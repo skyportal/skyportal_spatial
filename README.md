@@ -1,1 +1,1 @@
-# SQLAlchemy Spatial Backend for Postgres Databases in Astronomy
+# SQLAlchemy Spatial Backend for Astronomical Postgres Databases
