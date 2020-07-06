@@ -30,8 +30,8 @@ jobs:
         brew services start postgresql
     - name: Set up test database
       run: |
-        createuser --superuser skyportal
-        createdb -U skyportal skyportal_test
+        sudo createuser --superuser skyportal
+        sudo createdb -U skyportal skyportal_test
     - name: Checkout, compile, and install q3c (mac)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
